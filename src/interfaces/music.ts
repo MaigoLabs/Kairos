@@ -1,0 +1,50 @@
+import type { MaimaiMajorVersionId, MaimaiRegion } from './base';
+
+export type MaimaiChartMetadata = {
+  // `level` is not included here and should be inferred from the change log.
+  designer: string;
+  // TODO: how many of TAP/HOLD/SLIDE/BREAK notes?
+};
+export type MaimaiChartMetadataIntermediate = MaimaiChartMetadata & {
+  level: number;
+};
+
+export type MaimaiMusicMetadataBase = {
+  name: string;
+  artist: string;
+  genre: string;
+  bpm: number;
+  charts: MaimaiChartMetadata[];
+};
+
+export type MaimaiMusicMetadataIntermediate = MaimaiMusicMetadataBase & {
+  chartsWithLevel: MaimaiChartMetadataIntermediate[];
+  versionId: MaimaiMajorVersionId;
+  deletedInPatch: boolean;
+  netOpenDate: string | null;
+};
+
+export enum MaimaiMusicAddDeleteLogEntry {
+  Added = 1,
+  AddedReMaster = 2,
+  DeletedFromPackage = 3,
+  DeletedInPatch = 4,
+}
+export type MaimaiMusicAddDeleteLog = Partial<Record<MaimaiMajorVersionId, MaimaiMusicAddDeleteLogEntry>>;
+export interface MaimaiMusicMetadataRegionalInfo {
+  /**
+   * For a music deleted from package, it don't have the level value in that version.
+   * For a music deleted in patch, it has the level value in that version.
+   */
+  addDeleteLog: MaimaiMusicAddDeleteLog;
+  netOpenDate: string | null;
+}
+
+export type MaimaiMusicLevelChangeLog = Partial<Record<MaimaiMajorVersionId, number>>[];
+export interface MaimaiMusicMetadata extends MaimaiMusicMetadataBase {
+  /**
+   * The level change log per chart (BASIC, ADVANCED, EXPERT, MASTER, Re:MASTER).
+   */
+  levelChangeLog: MaimaiMusicLevelChangeLog; // This is observed to be identical for all regions.
+  regionalInfo: Partial<Record<MaimaiRegion, MaimaiMusicMetadataRegionalInfo>>;
+}
