@@ -13,6 +13,15 @@ export const parseNetOpenDate = (input: unknown) => {
   return `20${year}-${month}-${day}`;
 };
 
+export const parseEventIdAsNetOpenDate = (input: unknown) => {
+  const str = zCoerceString(input);
+  const match = str.match(/^(\d{2})(\d{2})(\d{2})/);
+  if (!match) return null;
+  const [, year, month, day] = match;
+  if (year === '99') return null;
+  return `20${year}-${month}-${day}`;
+};
+
 export type VersionedMap<T> = Partial<Record<MaimaiMajorVersionId, T>>;
 export const maybeCompactVersionedMap = <T>(versionedMap: VersionedMap<T>): MetadataMaybeVersioned<T> => {
   const versionedEntries = objectEntries(versionedMap)

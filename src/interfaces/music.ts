@@ -22,6 +22,7 @@ export type MaimaiMusicMetadataIntermediate = MaimaiMusicMetadataBase & {
   versionId: MaimaiMajorVersionId;
   deletedInPatch: boolean;
   netOpenDate: string | null;
+  subEventDate: string | null;
 };
 
 export enum MaimaiMusicAddDeleteLogEntry {
@@ -38,6 +39,7 @@ export interface MaimaiMusicMetadataRegionalInfo {
    */
   addDeleteLog: MaimaiMusicAddDeleteLog;
   netOpenDate: string | null;
+  subEventDate: string | null;
 }
 
 export type MaimaiMusicLevelChangeLog = Partial<Record<MaimaiMajorVersionId, number>>[];

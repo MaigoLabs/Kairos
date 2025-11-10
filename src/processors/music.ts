@@ -3,7 +3,7 @@ import { MaimaiRegion, MaimaiMajorVersionId, maimaiMajorVersionIds, MaimaiMusicA
 import { createLogger } from '../logger';
 import type { MetadataMerger } from '../master';
 import { forEachParallel, objectEntries, objectKeys } from '../utils/base';
-import { parseNetOpenDate } from '../utils/data';
+import { parseEventIdAsNetOpenDate, parseNetOpenDate } from '../utils/data';
 import { forEachRegionAndVersion } from '../utils/each';
 import { globFiles, parseXmls } from '../utils/fs';
 import { zCoerceNumber, zCoerceString, zParseEnum } from '../utils/zod';
@@ -23,6 +23,7 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
     const bpm = zCoerceNumber(MusicData.bpm);
     const versionId = zParseEnum(MaimaiMajorVersionId, MusicData.AddVersion.id);
     const netOpenDate = parseNetOpenDate(MusicData.netOpenName.str);
+    const subEventDate = parseEventIdAsNetOpenDate(MusicData.subEventName.id);
 
     const charts = (MusicData.notesData.Notes as any[]).map(note =>
       // DX and DX+ version didn't set the `isEnable` flag.
@@ -60,6 +61,7 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
       charts: charts.map(c => ({ designer: c!.designer })),
       chartsWithLevel: charts.map(c => c!),
       netOpenDate,
+      subEventDate,
       deletedInPatch: false,
     } satisfies MaimaiMusicMetadataIntermediate;
   }));
@@ -89,8 +91,10 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
     const regionalInfo = resultMusic.regionalInfo[region] ??= {
       addDeleteLog: {},
       netOpenDate: null,
+      subEventDate: null,
     };
-    regionalInfo.netOpenDate = music.netOpenDate; // The newest version comes first.
+    regionalInfo.netOpenDate ??= music.netOpenDate; // The newest version comes first.
+    regionalInfo.subEventDate ??= music.subEventDate;
     lowsetSeenVersionId[id] = Math.min(lowsetSeenVersionId[id] ?? version, version);
   }));
 
