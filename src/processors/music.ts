@@ -89,6 +89,7 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
       resultMusic.charts.push(...music.charts.slice(resultMusic.charts.length));
     }
     const regionalInfo = resultMusic.regionalInfo[region] ??= {
+      versionId: music.versionId,
       addDeleteLog: {},
       netOpenDate: null,
       subEventDate: null,

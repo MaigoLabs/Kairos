@@ -33,6 +33,7 @@ export enum MaimaiMusicAddDeleteLogEntry {
 }
 export type MaimaiMusicAddDeleteLog = Partial<Record<MaimaiMajorVersionId, MaimaiMusicAddDeleteLogEntry>>;
 export interface MaimaiMusicMetadataRegionalInfo {
+  versionId: MaimaiMajorVersionId;
   /**
    * For a music deleted from package, it don't have the level value in that version.
    * For a music deleted in patch, it has the level value in that version.
