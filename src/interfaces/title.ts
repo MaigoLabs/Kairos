@@ -15,3 +15,6 @@ export type BasicMetadata<TExtra = {}> = MetadataMaybeRegionalized<BasicMetadata
 };
 
 export type MaimaiTitleMetadataExtra = { rareType: MaimaiTitleRareType };
+export type MaimaiFrameMetadataExtra = { thumbHash: string };
+export type MaimaiIconMetadataExtra = { thumbHash: string };
+export type MaimaiPlateMetadataExtra = { thumbHash: string };

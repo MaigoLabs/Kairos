@@ -3,14 +3,13 @@ import path from 'node:path';
 
 import Tinypool from 'tinypool';
 
-import type { Config } from './index';
-import type { MaimaiMajorVersionId, MaimaiMetadataKind, MaimaiRegion } from './interfaces';
-import { maimaiMetadataKinds } from './interfaces';
-import { createLogger } from './logger';
+import type { MaimaiMajorVersionId, MaimaiMetadataKind, MaimaiRegion, MaimaiThumbKind } from '../interfaces';
+import { maimaiMetadataKinds, maimaiThumbKinds } from '../interfaces';
+import { createLogger } from '../logger';
 import { basicDataTypes } from './processors/basic';
 import { mergeMusic } from './processors/music';
-import { arrayToObject, getOrSet, objectEntries, objectMap } from './utils/base';
 import type { WorkerArguments } from './worker';
+import { arrayToObject, getOrSet, objectEntries, objectMap } from '../utils/base';
 
 const logger = createLogger('Master');
 
@@ -21,15 +20,23 @@ const pool = new Tinypool({
 });
 
 export type IntermediateDataMap<TIntermediateData> = Map<MaimaiRegion, Map<MaimaiMajorVersionId, TIntermediateData>>;
-export type MetadataMerger<TIntermediateData, TResult> = (intermediateDataMap: IntermediateDataMap<TIntermediateData>) => TResult;
+export type MetadataMerger<TIntermediateData, TResult> = (intermediateDataMap: IntermediateDataMap<TIntermediateData>, thumbCache: Record<MaimaiThumbKind, Record<number, string>>) => TResult;
 
-export const run = async (config: Config) => {
-  const outputDir = path.resolve(config.outputDir);
+export const runMetadata = async (inputs: Record<MaimaiRegion, Record<MaimaiMajorVersionId, string>>, outputDir: string) => {
   await fs.promises.mkdir(outputDir, { recursive: true });
+
+  const thumbCacheFilePath = path.resolve(outputDir, 'thumb.json');
+  let thumbCache: Record<MaimaiThumbKind, Record<number, string>>;
+  if (await fs.promises.stat(thumbCacheFilePath).catch(() => false)) {
+    thumbCache = JSON.parse(await fs.promises.readFile(thumbCacheFilePath, 'utf-8')) as Record<MaimaiThumbKind, Record<number, string>>;
+  } else {
+    logger.warn('Thumb cache not found, generating metadata with empty thumb hashes');
+    thumbCache = arrayToObject(maimaiThumbKinds, () => ({}));
+  }
 
   const index: Map<MaimaiMetadataKind, Map<MaimaiRegion, Map<MaimaiMajorVersionId, string>>> = new Map();
   const tasks: Promise<void>[] = [];
-  for (const [regionName, versionPathMap] of objectEntries(config.inputs)) {
+  for (const [regionName, versionPathMap] of objectEntries(inputs)) {
     const region = regionName as MaimaiRegion;
     for (const [versionName, streamingAssetsPath] of objectEntries(versionPathMap)) {
       const version = Number(versionName) as MaimaiMajorVersionId;
@@ -46,6 +53,7 @@ export const run = async (config: Config) => {
         if (fs.existsSync(outputFilePath)) continue;
 
         tasks.push(pool.run({
+          thumbCache,
           region,
           version,
           streamingAssetsPath,
@@ -75,7 +83,7 @@ export const run = async (config: Config) => {
   };
   const result = objectEntries(mergers).reduce((result, [kind, merger]) => {
     try {
-      result[kind] = merger(dataMap.get(kind)!);
+      result[kind] = merger(dataMap.get(kind)!, thumbCache);
       return result;
     } catch (error) {
       logger.error(`Failed to merge ${kind} metadata`);

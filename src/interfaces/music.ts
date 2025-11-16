@@ -45,6 +45,7 @@ export interface MaimaiMusicMetadataRegionalInfo {
 
 export type MaimaiMusicLevelChangeLog = Partial<Record<MaimaiMajorVersionId, number>>[];
 export interface MaimaiMusicMetadata extends MaimaiMusicMetadataBase {
+  jacketThumbHash: string;
   /**
    * The level change log per chart (BASIC, ADVANCED, EXPERT, MASTER, Re:MASTER).
    */

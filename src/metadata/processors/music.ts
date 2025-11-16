@@ -1,12 +1,12 @@
-import type { MaimaiChartMetadataIntermediate, MaimaiMusicMetadata, MaimaiMusicMetadataIntermediate } from '../interfaces';
-import { MaimaiRegion, MaimaiMajorVersionId, maimaiMajorVersionIds, MaimaiMusicAddDeleteLogEntry } from '../interfaces';
-import { createLogger } from '../logger';
+import type { MaimaiChartMetadataIntermediate, MaimaiMusicMetadata, MaimaiMusicMetadataIntermediate } from '../../interfaces';
+import { MaimaiRegion, MaimaiMajorVersionId, maimaiMajorVersionIds, MaimaiMusicAddDeleteLogEntry } from '../../interfaces';
+import { createLogger } from '../../logger';
+import { forEachParallel, objectEntries, objectKeys } from '../../utils/base';
+import { parseEventIdAsNetOpenDate, parseNetOpenDate } from '../../utils/data';
+import { forEachRegionAndVersion } from '../../utils/each';
+import { globFiles, parseXmls } from '../../utils/fs';
+import { zCoerceNumber, zCoerceString, zParseEnum } from '../../utils/zod';
 import type { MetadataMerger } from '../master';
-import { forEachParallel, objectEntries, objectKeys } from '../utils/base';
-import { parseEventIdAsNetOpenDate, parseNetOpenDate } from '../utils/data';
-import { forEachRegionAndVersion } from '../utils/each';
-import { globFiles, parseXmls } from '../utils/fs';
-import { zCoerceNumber, zCoerceString, zParseEnum } from '../utils/zod';
 import type { WorkerProcessor } from '../worker';
 
 const logger = createLogger('Music');
@@ -74,19 +74,22 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
   return musics;
 };
 
-export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiMusicMetadata>> = dataMap => {
+export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiMusicMetadata>> = (dataMap, thumbCache) => {
   const result: Record<number, MaimaiMusicMetadata> = {};
 
   // Merge all musics. JPN first. Nerwer version first.
   const lowsetSeenVersionId: Record<number, MaimaiMajorVersionId> = {};
   forEachRegionAndVersion(dataMap, 'jpnFirst', 'newFirst', (region, version, musics) => Object.entries(musics).forEach(([idStr, music]) => {
     const id = Number(idStr);
+    const thumbHash = thumbCache.music[id % 10000];
+    if (!thumbHash) logger.warn(`Thumb hash not found for music ${id}`);
     const resultMusic = result[id] ??= {
       name: music.name,
       artist: music.artist,
       genre: music.genre,
       bpm: music.bpm,
       charts: music.charts,
+      jacketThumbHash: thumbHash ?? '',
       levelChangeLog: [],
       regionalInfo: {},
     };
