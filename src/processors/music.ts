@@ -38,6 +38,12 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
         } satisfies MaimaiChartMetadataIntermediate
         : undefined);
 
+    // Re:MASTER is removed (bugfix?).
+    if (MusicData.subEventName.id === 0 && charts[4] != null) {
+      logger.warn(`Music ${fileName} (${name}) has Re:MASTER removed (bugfix?)`);
+      charts[4] = undefined;
+    }
+
     // Remove charts of nonexistent difficulties.
     while (charts.length > 0 && charts[charts.length - 1] === undefined) charts.pop();
 
