@@ -1,4 +1,9 @@
-import type { MaimaiChartMetadataIntermediate, MaimaiMusicMetadata, MaimaiMusicMetadataIntermediate } from '../../interfaces';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { glob } from 'glob';
+
+import type { MaimaiChartMetadata, MaimaiChartNoteStats, MaimaiMusicMetadata, MaimaiMusicMetadataIntermediate } from '../../interfaces';
 import { MaimaiRegion, MaimaiMajorVersionId, maimaiMajorVersionIds, MaimaiMusicAddDeleteLogEntry } from '../../interfaces';
 import { createLogger } from '../../logger';
 import { forEachParallel, objectEntries, objectKeys } from '../../utils/base';
@@ -13,9 +18,45 @@ const logger = createLogger('Music');
 
 type IntermediateData = Record<number, MaimaiMusicMetadataIntermediate>;
 
+const parseChartContent = (chartContent: string): MaimaiChartNoteStats => {
+  const result: MaimaiChartNoteStats = {
+    tap: 0,
+    hold: 0,
+    slide: 0,
+    touch: 0,
+    break: 0,
+  };
+  for (const line of chartContent.split('\n').map(line => line.trim())) {
+    if (line.startsWith('T_NUM_TAP')) {
+      result.tap = parseInt(line.split('\t')[1]?.trim() ?? '0');
+    } else if (line.startsWith('T_NUM_HLD')) {
+      result.hold = parseInt(line.split('\t')[1]?.trim() ?? '0');
+    } else if (line.startsWith('T_NUM_SLD')) {
+      result.slide = parseInt(line.split('\t')[1]?.trim() ?? '0');
+    } else if (line.startsWith('T_REC_TTP')) {
+      result.touch = parseInt(line.split('\t')[1]?.trim() ?? '0');
+    } else if (line.startsWith('T_NUM_BRK')) {
+      result.break = parseInt(line.split('\t')[1]?.trim() ?? '0');
+    }
+  }
+  if (!Object.values(result).every(Number.isSafeInteger)) throw new Error(`Chart parsed to invalid note stats: ${JSON.stringify(result)}`);
+  result.tap = result.tap - result.touch;
+  return result;
+};
+
 export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
   const musics: Record<number, MaimaiMusicMetadataIntermediate> = {};
   await ctx.forEachAxxxDirOrdered(async axxxDir => await forEachParallel(parseXmls(globFiles(axxxDir, 'music', 'music', 'Music.xml')), async ({ fileName, xml: { MusicData } }) => {
+    const musicDir = path.dirname(fileName);
+    const chartPaths = await glob(path.join(musicDir, '*.ma2'));
+    const chartStats = new Map(await Promise.all(chartPaths.map(async chartPath => {
+      const chartContent = await fs.promises.readFile(chartPath, 'utf-8');
+      const difficulty = path.basename(chartPath).split('_').pop()?.split('.')[0];
+      const numericDifficulty = difficulty === 'L' ? 0 : difficulty === 'R' ? 1 : Number(difficulty);
+      if (!Number.isSafeInteger(numericDifficulty)) throw new Error(`Failed to extract difficulty from chart path: ${chartPath}`);
+      return [numericDifficulty, parseChartContent(chartContent)] as const;
+    })));
+
     const id = zCoerceNumber(MusicData.name.id);
     const name = zCoerceString(MusicData.name.str);
     const artist = zCoerceString(MusicData.artistName.str);
@@ -25,17 +66,19 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
     const netOpenDate = parseNetOpenDate(MusicData.netOpenName.str);
     const subEventDate = parseEventIdAsNetOpenDate(MusicData.subEventName.id);
 
-    const charts = (MusicData.notesData.Notes as any[]).map(note =>
+    const buildChartMetadata = (note: any, stats?: MaimaiChartNoteStats) => ({
+      level: zCoerceNumber(note.level) + zCoerceNumber(note.levelDecimal) / 10,
+      designer: zCoerceString(note.notesDesigner.str),
+      stats,
+    } satisfies MaimaiChartMetadata & { level: number });
+    const charts = (MusicData.notesData.Notes as any[]).map((note, difficulty) =>
       // DX and DX+ version didn't set the `isEnable` flag.
       (
         ctx.version === MaimaiMajorVersionId.DX || ctx.version === MaimaiMajorVersionId.DX_PLUS
           ? !!note.level
           : note.isEnable
       )
-        ? {
-          level: zCoerceNumber(note.level) + zCoerceNumber(note.levelDecimal) / 10,
-          designer: zCoerceString(note.notesDesigner.str),
-        } satisfies MaimaiChartMetadataIntermediate
+        ? buildChartMetadata(note, chartStats.get(difficulty))
         : undefined);
 
     // Re:MASTER is removed (bugfix?).
@@ -46,6 +89,11 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
 
     // Remove charts of nonexistent difficulties.
     while (charts.length > 0 && charts[charts.length - 1] === undefined) charts.pop();
+
+    // Utage charts may have 2 chart files but only one notesData (_L and _R).
+    if (id >= 100000 && charts.length === 1 && chartStats.size === 2) {
+      charts.push(buildChartMetadata(MusicData.notesData.Notes[0], chartStats.get(/* _R */ 1)));
+    }
 
     // Normally musics are deleted only on major version updates.
     // However, sometimes they delete musics in patches due to political or copyright reasons.
@@ -64,8 +112,8 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
       genre,
       bpm,
       versionId,
-      charts: charts.map(c => ({ designer: c!.designer })),
-      chartsWithLevel: charts.map(c => c!),
+      charts: charts.map(c => ({ designer: c!.designer, stats: c!.stats })),
+      chartLevel: charts.map(c => c!.level),
       netOpenDate,
       subEventDate,
       deletedInPatch: false,
@@ -121,9 +169,9 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
     for (const [idStr, music] of objectEntries(musics)) {
       const id = Number(idStr);
       const changeLog = (perRegionLevelChangeLog[id]![region] ??= []);
-      for (const [i, chart] of music.chartsWithLevel.entries()) {
+      for (const [i, level] of music.chartLevel.entries()) {
         unseenMusicIds.delete(id);
-        if (chart) (changeLog[i] ||= {})[version] = chart.level;
+        (changeLog[i] ||= {})[version] = level;
       }
     }
     // For each unseen music IDs, if we've seen it before in current region, mark it as "deleted from package".
@@ -247,6 +295,13 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
           delete levelChangeLogEntries[version];
         }
       }
+    }
+  }
+
+  for (const [idStr, music] of objectEntries(result)) {
+    const id = Number(idStr);
+    for (const [difficulty, chart] of music.charts.entries()) {
+      if (!chart.stats) logger.warn(`Music ${id}[${difficulty}] (${music.name}) has no stats`);
     }
   }
 

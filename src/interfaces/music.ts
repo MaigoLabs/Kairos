@@ -1,12 +1,17 @@
 import type { MaimaiMajorVersionId, MaimaiRegion } from './base';
 
+export type MaimaiChartNoteStats = {
+  tap: number;
+  hold: number;
+  slide: number;
+  touch: number;
+  break: number;
+};
+
 export type MaimaiChartMetadata = {
   // `level` is not included here and should be inferred from the change log.
   designer: string;
-  // TODO: how many of TAP/HOLD/SLIDE/BREAK notes?
-};
-export type MaimaiChartMetadataIntermediate = MaimaiChartMetadata & {
-  level: number;
+  stats?: MaimaiChartNoteStats;
 };
 
 export type MaimaiMusicMetadataBase = {
@@ -18,7 +23,7 @@ export type MaimaiMusicMetadataBase = {
 };
 
 export type MaimaiMusicMetadataIntermediate = MaimaiMusicMetadataBase & {
-  chartsWithLevel: MaimaiChartMetadataIntermediate[];
+  chartLevel: number[];
   versionId: MaimaiMajorVersionId;
   deletedInPatch: boolean;
   netOpenDate: string | null;
