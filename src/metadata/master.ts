@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import Tinypool from 'tinypool';
 
-import type { MaimaiMajorVersionId, MaimaiMetadataKind, MaimaiRegion, MaimaiThumbKind } from '../interfaces';
+import type { MaimaiMajorVersionId, MaimaiMetadataKind, MaimaiRegion, ThumbCache } from '../interfaces';
 import { maimaiMetadataKinds, maimaiThumbKinds } from '../interfaces';
 import { createLogger } from '../logger';
 import { basicDataTypes } from './processors/basic';
@@ -20,15 +20,15 @@ const pool = new Tinypool({
 });
 
 export type IntermediateDataMap<TIntermediateData> = Map<MaimaiRegion, Map<MaimaiMajorVersionId, TIntermediateData>>;
-export type MetadataMerger<TIntermediateData, TResult> = (intermediateDataMap: IntermediateDataMap<TIntermediateData>, thumbCache: Record<MaimaiThumbKind, Record<number, string>>) => TResult;
+export type MetadataMerger<TIntermediateData, TResult> = (intermediateDataMap: IntermediateDataMap<TIntermediateData>, thumbCache: ThumbCache) => TResult;
 
 export const runMetadata = async (inputs: Record<MaimaiRegion, Record<MaimaiMajorVersionId, string>>, outputDir: string) => {
   await fs.promises.mkdir(outputDir, { recursive: true });
 
   const thumbCacheFilePath = path.resolve(outputDir, 'thumb.json');
-  let thumbCache: Record<MaimaiThumbKind, Record<number, string>>;
+  let thumbCache: ThumbCache;
   if (await fs.promises.stat(thumbCacheFilePath).catch(() => false)) {
-    thumbCache = JSON.parse(await fs.promises.readFile(thumbCacheFilePath, 'utf-8')) as Record<MaimaiThumbKind, Record<number, string>>;
+    thumbCache = JSON.parse(await fs.promises.readFile(thumbCacheFilePath, 'utf-8')) as ThumbCache;
   } else {
     logger.warn('Thumb cache not found, generating metadata with empty thumb hashes');
     thumbCache = arrayToObject(maimaiThumbKinds, () => ({}));

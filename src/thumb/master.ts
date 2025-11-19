@@ -4,7 +4,7 @@ import path from 'node:path';
 import { glob } from 'glob';
 import Tinypool from 'tinypool';
 
-import type { MaimaiThumbKind } from '../interfaces';
+import type { ThumbCache } from '../interfaces';
 import { maimaiThumbKinds } from '../interfaces';
 import { createLogger } from '../logger';
 import type { WorkerArguments } from './worker';
@@ -21,10 +21,10 @@ const pool = new Tinypool({
 const NUM_WORKERS = 32;
 const ASSET_SUFFIX = '.png';
 
-export const runThumb = async (assetsDir: string, outputDir: string) => {
+export const runThumb = async (assetsDir: string, hashSalt: string, outputDir: string) => {
   await fs.promises.mkdir(path.resolve(outputDir, 'thumb'), { recursive: true });
 
-  const workerArgs: WorkerArguments[] = Array.from({ length: NUM_WORKERS }).map((_, i) => ({ tasks: [], outputFile: path.resolve(outputDir, 'thumb', `${i}.json`) }));
+  const workerArgs: WorkerArguments[] = Array.from({ length: NUM_WORKERS }).map((_, i) => ({ hashSalt, tasks: [], outputFile: path.resolve(outputDir, 'thumb', `${i}.json`) }));
   let i = 0;
   for (const kind of maimaiThumbKinds) {
     const files = await glob(`${assetsDir}/${kind}/*${ASSET_SUFFIX}`);
@@ -42,9 +42,9 @@ export const runThumb = async (assetsDir: string, outputDir: string) => {
 
   await Promise.all(workerArgs.map(args => pool.run(args)));
 
-  const result: Record<MaimaiThumbKind, Record<number, string>> = arrayToObject(maimaiThumbKinds, () => ({}));
+  const result: ThumbCache = arrayToObject(maimaiThumbKinds, () => ({}));
   for (const args of workerArgs) {
-    const data = JSON.parse(await fs.promises.readFile(args.outputFile, 'utf-8')) as Record<MaimaiThumbKind, Record<number, string>>;
+    const data = JSON.parse(await fs.promises.readFile(args.outputFile, 'utf-8')) as ThumbCache;
     for (const [kind, entries] of objectEntries(data)) {
       Object.assign(result[kind], entries);
     }

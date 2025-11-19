@@ -129,15 +129,15 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
   const lowsetSeenVersionId: Record<number, MaimaiMajorVersionId> = {};
   forEachRegionAndVersion(dataMap, 'jpnFirst', 'newFirst', (region, version, musics) => Object.entries(musics).forEach(([idStr, music]) => {
     const id = Number(idStr);
-    const thumbHash = thumbCache.music[id % 10000];
-    if (!thumbHash) logger.warn(`Thumb hash not found for music ${id}`);
+    const jacket = thumbCache.music[id % 10000];
+    if (!jacket) logger.warn(`Jacket not found for music ${id}`);
     const resultMusic = result[id] ??= {
       name: music.name,
       artist: music.artist,
       genre: music.genre,
       bpm: music.bpm,
       charts: music.charts,
-      jacketThumbHash: thumbHash ?? '',
+      jacket,
       levelChangeLog: [],
       regionalInfo: {},
     };

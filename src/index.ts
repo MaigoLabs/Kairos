@@ -18,6 +18,7 @@ export const Config = z.object({
     z.record(z.preprocess(Number, z.enum(MaimaiMajorVersionId)), z.string()),
   ).optional(),
   assetsDir: z.string().optional(),
+  hashSalt: z.string().optional(),
   outputDir: z.string(),
 });
 export type Config = z.infer<typeof Config>;
@@ -31,7 +32,7 @@ if (command === 'metadata') {
   await runMetadata(config.inputs, config.outputDir);
 } else if (command === 'thumb') {
   if (!config.assetsDir) throw new Error('config.assetsDir is required');
-  await runThumb(config.assetsDir, config.outputDir);
+  await runThumb(config.assetsDir, config.hashSalt ?? '', config.outputDir);
 } else {
   throw new Error(`Unknown command: ${command}`);
 }

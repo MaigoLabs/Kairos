@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 
-import type { MaimaiMetadataKind, MaimaiRegion, MaimaiMajorVersionId, MaimaiThumbKind } from '../interfaces';
+import type { MaimaiMetadataKind, MaimaiRegion, MaimaiMajorVersionId, ThumbCache } from '../interfaces';
 import { createLogger } from '../logger';
 import { basicDataTypes } from './processors/basic';
 import { processMusic } from './processors/music';
@@ -10,7 +10,7 @@ import { globAxxxDirs } from '../utils/fs';
 const logger = createLogger('Worker');
 
 export interface WorkerArguments {
-  thumbCache: Record<MaimaiThumbKind, Record<number, string>>;
+  thumbCache: ThumbCache;
   region: MaimaiRegion;
   version: MaimaiMajorVersionId;
   streamingAssetsPath: string;

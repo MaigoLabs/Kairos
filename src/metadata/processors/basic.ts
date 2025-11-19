@@ -34,9 +34,9 @@ const defineDataType = <TExtra = {}>(
       const netOpenDate = parseNetOpenDate(xmlData.netOpenName.str);
       result[id] = { name, netOpenDate, ...parseExtraFields(xmlData) };
       if (thumbKind) {
-        const thumbHash = ctx.thumbCache[thumbKind][id];
-        if (!thumbHash) logger.warn(`Thumb hash not found for ${thumbKind} ${id}`);
-        (result[id] as { thumbHash?: string }).thumbHash = thumbHash ?? '';
+        const assetImage = ctx.thumbCache[thumbKind][id];
+        if (!assetImage) logger.warn(`Asset image ${thumbKind} ${id} not found in thumb cache`);
+        (result[id] as { assetImage?: { thumbhash: string; hash: string } }).assetImage = assetImage;
       }
     }));
     return result;
