@@ -35,9 +35,9 @@ export default async (args: WorkerArguments) => {
     ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
     const rgba = new Uint8Array(imageData.data.buffer);
-    const thumbhash = rgbaToThumbHash(resizedWidth, resizedHeight, rgba);
+    const thumbHash = rgbaToThumbHash(resizedWidth, resizedHeight, rgba);
     logger.log(`Generated thumbhash for ${filePath}`);
-    result[kind][id] = { thumbhash: Buffer.from(thumbhash).toString('base64url'), hash };
+    result[kind][id] = { thumbHash: Buffer.from(thumbHash).toString('base64url'), hash };
   }));
   await fs.promises.writeFile(args.outputFile, JSON.stringify(result, null, 2));
 };

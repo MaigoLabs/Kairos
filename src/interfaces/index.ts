@@ -7,4 +7,4 @@ export type MaimaiMetadataKind = (typeof maimaiMetadataKinds)[number];
 
 export const maimaiThumbKinds = ['music', 'frame', 'icon', 'plate'] as const;
 export type MaimaiThumbKind = (typeof maimaiThumbKinds)[number];
-export type ThumbCache = Record<MaimaiThumbKind, Record<number, { thumbhash: string; hash: string }>>;
+export type ThumbCache = Record<MaimaiThumbKind, Record<number, { thumbHash: string; hash: string }>>;
