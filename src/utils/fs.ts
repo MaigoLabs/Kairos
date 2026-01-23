@@ -7,7 +7,7 @@ export async function* parseXmls(stream: ReturnType<typeof glob.stream>) {
   for await (const file of stream) {
     const fileName = typeof file === 'string' ? file : file.fullpath();
     const xmlString = await fs.promises.readFile(fileName, 'utf-8');
-    const xml = new XMLParser({ ignoreAttributes: false, allowBooleanAttributes: true }).parse(xmlString);
+    const xml = new XMLParser({ ignoreAttributes: false, allowBooleanAttributes: true, trimValues: false }).parse(xmlString);
     yield { fileName, xml };
   }
 }
