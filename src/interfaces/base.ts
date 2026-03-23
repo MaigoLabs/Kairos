@@ -44,6 +44,7 @@ export enum MaimaiMajorVersionId {
   PRiSM = 23,
   PRiSM_PLUS = 24,
   CiRCLE = 25,
+  CiRCLE_PLUS = 26,
 }
 
 export const maimaiMajorVersionIds = Object.values(MaimaiMajorVersionId).filter(
