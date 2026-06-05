@@ -2,6 +2,7 @@ export * from './base';
 export * from './music';
 export * from './title';
 export * from './assets';
+export * from './loginBonus';
 
 import { maimaiAssetKinds } from './assets';
 
