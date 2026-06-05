@@ -3,13 +3,17 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "start": "bun src/index.ts metadata",
-    "start:thumb": "bun src/index.ts thumb",
+    "metadata": "bun src/index.ts metadata",
+    "image:unpack": "bun src/index.ts unpack",
+    "image:upscale": "bun src/index.ts upscale",
+    "image:encode": "bun src/index.ts encode",
+    "image:upload": "bun src/index.ts upload",
+    "image:thumb": "bun src/index.ts thumb",
     "typecheck": "tsc",
     "lint": "eslint --cache --ext .",
     "lint:fix": "eslint --cache --ext . --fix"
   },
-  "license": "UNLICENSED",
+  "license": "AGPL-3.0-or-later",
   "packageManager": "pnpm@10.20.0",
   "private": true,
   "devDependencies": {
@@ -25,6 +29,7 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1062.0",
     "@guiiai/logg": "^1.2.5",
     "@napi-rs/canvas": "^0.1.82",
     "@types/js-yaml": "^4.0.9",

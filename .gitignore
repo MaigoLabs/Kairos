@@ -141,3 +141,8 @@ vite.config.ts.timestamp-*
 .vite/
 
 /config.yaml
+
+# Asset pipeline binary/model download cache (upscayl-bin, avifenc, cwebp, ncnn models)
+/.cache/
+
+/python/.venv/

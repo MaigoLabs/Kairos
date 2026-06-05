@@ -4,13 +4,13 @@ import type { BasicMetadata, BasicMetadataBase, BasicMetadataIntermediate, Maima
 import { MaimaiTitleRareType } from '../../interfaces';
 import { createLogger } from '../../logger';
 import { forEachParallel, objectMap } from '../../utils/base';
-import type { RegionalizedMap, RegionalizedNetOpenDate } from '../../utils/data';
-import { maybeCompactRegionalizedMap, parseNetOpenDate } from '../../utils/data';
-import { forEachRegionAndVersion } from '../../utils/each';
-import { globFiles, parseXmls } from '../../utils/fs';
-import { zCoerceNumber, zCoerceString, zParseEnum } from '../../utils/zod';
+import type { RegionalizedMap, RegionalizedNetOpenDate } from '../data';
+import { maybeCompactRegionalizedMap, parseNetOpenDate } from '../data';
+import { forEachRegionAndVersion } from '../each';
+import { globFiles, parseXmls } from '../fs';
 import type { MetadataMerger } from '../master';
 import type { WorkerProcessor } from '../worker';
+import { zCoerceNumber, zCoerceString, zParseEnum } from '../zod';
 
 const logger = createLogger('Basic');
 
@@ -34,7 +34,7 @@ const defineDataType = <TExtra = {}>(
       const netOpenDate = parseNetOpenDate(xmlData.netOpenName.str);
       result[id] = { name, netOpenDate, ...parseExtraFields(xmlData) };
       if (thumbKind) {
-        const image = ctx.thumbCache[thumbKind][id];
+        const image = ctx.thumbCache[thumbKind][String(id)];
         if (!image) logger.warn(`Asset image ${thumbKind} ${id} not found in thumb cache`);
         (result[id] as { image?: { thumbHash: string; hash: string } }).image = image;
       }
@@ -42,7 +42,6 @@ const defineDataType = <TExtra = {}>(
     return result;
   },
   merge: dataMap => {
-    // Merge
     const regionalNetOpenDate: Record<number, RegionalizedNetOpenDate> = {};
     const mergedMap: Record<number, RegionalizedMap<BasicMetadataBase<TExtra>>> = {};
     forEachRegionAndVersion(dataMap, 'jpnFirst', 'oldFirst', (region, version, entries) => Object.entries(entries).forEach(([idStr, entry]) => {
@@ -55,7 +54,6 @@ const defineDataType = <TExtra = {}>(
       if (entry.netOpenDate) (regionalNetOpenDate[id] ??= {})[region] = entry.netOpenDate; // Newer version overrides the older one.
     }));
 
-    // Compact
     return objectMap(mergedMap, (regionalizedMap, idStr) => ({
       ...maybeCompactRegionalizedMap(regionalizedMap!),
       regionalNetOpenDate: regionalNetOpenDate[Number(idStr)]!,

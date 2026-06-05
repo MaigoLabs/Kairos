@@ -1,0 +1,27 @@
+[project]
+name = "kairos-python"
+version = "0.0.1"
+requires-python = ">=3.11"
+dependencies = [
+  "UnityPy>=1.25,<2.0",
+  "spandrel>=0.4.0",
+  "spandrel-extra-arches>=0.2.0",
+  "torch>=2.1.0",
+  "torchvision>=0.16.0",
+  "numpy<2.0",
+  "pillow",
+  "packaging",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu124" },
+]
+torchvision = [
+  { index = "pytorch-cu124" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu124"
+url = "https://download.pytorch.org/whl/cu124"
+explicit = true

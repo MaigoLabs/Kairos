@@ -1,7 +1,7 @@
 import type { MaimaiMajorVersionId } from '../interfaces';
 import { MaimaiRegion } from '../interfaces';
 
-export const forEachRegion = <T>(
+const forEachRegion = <T>(
   regionMap: Map<MaimaiRegion, T>,
   order: 'jpnFirst' | 'jpnLast',
   callback: (region: MaimaiRegion, data: T) => void,
@@ -14,7 +14,7 @@ export const forEachRegion = <T>(
     )
     .forEach(([region, data]) => callback(region, data));
 
-export const forEachVersion = <T>(
+const forEachVersion = <T>(
   versionMap: Map<MaimaiMajorVersionId, T>,
   order: 'oldFirst' | 'newFirst',
   callback: (version: MaimaiMajorVersionId, data: T) => void,

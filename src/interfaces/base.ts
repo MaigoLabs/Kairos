@@ -12,7 +12,7 @@ export function maimaiRegionFromGameId(gameId: string) {
     return MaimaiRegion.EXP;
   case '\x53\x44\x47\x42':
     return MaimaiRegion.CHN;
-  default: // Fallback to JPN
+  default:
     return MaimaiRegion.JPN;
   }
 }
@@ -60,7 +60,7 @@ export function maimaiVersionIdFromVersionString(gameVersion: string) {
   const result = MaimaiMajorVersionId.DX + i;
   return maimaiMajorVersionIds.includes(result)
     ? result
-    : /* Fallback to the latest version */ maimaiMajorVersionIds[maimaiMajorVersionIds.length - 1];
+    : maimaiMajorVersionIds[maimaiMajorVersionIds.length - 1];
 }
 
 export type MetadataUnversioned<T> = { unversioned: T };

@@ -1,8 +1,8 @@
 import { isEqual } from 'es-toolkit';
 
 import type { MaimaiMajorVersionId, MaimaiRegion, MetadataMaybeRegionalized, MetadataMaybeVersioned } from '../interfaces';
-import { objectEntries, objectFromEntries, objectMap } from './base';
 import { zCoerceString } from './zod';
+import { objectEntries, objectFromEntries, objectMap } from '../utils/base';
 
 export const parseNetOpenDate = (input: unknown) => {
   const str = zCoerceString(input);

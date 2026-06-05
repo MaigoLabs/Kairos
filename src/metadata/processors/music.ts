@@ -7,12 +7,12 @@ import type { MaimaiChartMetadata, MaimaiChartNoteStats, MaimaiMusicMetadata, Ma
 import { MaimaiRegion, MaimaiMajorVersionId, maimaiMajorVersionIds, MaimaiMusicAddDeleteLogEntry } from '../../interfaces';
 import { createLogger } from '../../logger';
 import { forEachParallel, objectEntries, objectKeys } from '../../utils/base';
-import { parseEventIdAsNetOpenDate, parseNetOpenDate } from '../../utils/data';
-import { forEachRegionAndVersion } from '../../utils/each';
-import { globFiles, parseXmls } from '../../utils/fs';
-import { zCoerceNumber, zCoerceString, zParseEnum } from '../../utils/zod';
+import { parseEventIdAsNetOpenDate, parseNetOpenDate } from '../data';
+import { forEachRegionAndVersion } from '../each';
+import { globFiles, parseXmls } from '../fs';
 import type { MetadataMerger } from '../master';
 import type { WorkerProcessor } from '../worker';
+import { zCoerceNumber, zCoerceString, zParseEnum } from '../zod';
 
 const logger = createLogger('Music');
 
@@ -87,7 +87,6 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
       charts[4] = undefined;
     }
 
-    // Remove charts of nonexistent difficulties.
     while (charts.length > 0 && charts[charts.length - 1] === undefined) charts.pop();
 
     // Utage charts may have 2 chart files but only one notesData (_L and _R).
@@ -125,7 +124,7 @@ export const processMusic: WorkerProcessor<IntermediateData> = async ctx => {
 export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiMusicMetadata>> = (dataMap, thumbCache) => {
   const result: Record<number, MaimaiMusicMetadata> = {};
 
-  // Merge all musics. JPN first. Nerwer version first.
+  // Merge all musics. JPN first. Newer version first.
   const lowsetSeenVersionId: Record<number, MaimaiMajorVersionId> = {};
   forEachRegionAndVersion(dataMap, 'jpnFirst', 'newFirst', (region, version, musics) => Object.entries(musics).forEach(([idStr, music]) => {
     const id = Number(idStr);
@@ -305,6 +304,6 @@ export const mergeMusic: MetadataMerger<IntermediateData, Record<number, MaimaiM
     }
   }
 
-  // TODO: Merge to one change log and track unavailablity (done). CHN 1.20 levels mismatch?
+  // TODO: track CHN 1.20 levels mismatch.
   return result;
 };

@@ -1,10 +1,13 @@
 export * from './base';
 export * from './music';
 export * from './title';
+export * from './assets';
+
+import { maimaiAssetKinds } from './assets';
 
 export const maimaiMetadataKinds = ['music', 'title', 'frame', 'icon', 'partner', 'plate', 'chara', 'card', 'loginBonus'] as const;
 export type MaimaiMetadataKind = (typeof maimaiMetadataKinds)[number];
 
-export const maimaiThumbKinds = ['music', 'frame', 'icon', 'plate'] as const;
+export const maimaiThumbKinds = maimaiAssetKinds;
 export type MaimaiThumbKind = (typeof maimaiThumbKinds)[number];
-export type ThumbCache = Record<MaimaiThumbKind, Record<number, { thumbHash: string; hash: string }>>;
+export type ThumbCache = Record<MaimaiThumbKind, Record<string, { thumbHash: string; hash: string }>>;

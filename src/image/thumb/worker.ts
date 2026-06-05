@@ -4,16 +4,16 @@ import fs from 'node:fs';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { rgbaToThumbHash } from 'thumbhash-node';
 
-import type { MaimaiThumbKind, ThumbCache } from '../interfaces';
-import { maimaiThumbKinds } from '../interfaces';
-import { createLogger } from '../logger';
-import { arrayToObject } from '../utils/base';
+import type { MaimaiThumbKind, ThumbCache } from '../../interfaces';
+import { maimaiThumbKinds } from '../../interfaces';
+import { createLogger } from '../../logger';
+import { arrayToObject } from '../../utils/base';
 
 const logger = createLogger('Worker');
 
 export type WorkerArguments = {
   hashSalt: string;
-  tasks: { kind: MaimaiThumbKind; id: number; filePath: string }[];
+  tasks: { kind: MaimaiThumbKind; id: string; filePath: string }[];
   outputFile: string;
 };
 

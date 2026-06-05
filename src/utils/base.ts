@@ -10,9 +10,6 @@ export const objectMap = <T extends object, R>(obj: T, fn: (value: T[keyof T], k
 export const arrayToObject = <T extends string | number | symbol, R>(array: readonly T[], fn: (value: T, index: number) => R) =>
   Object.fromEntries(array.map((value, index) => [value, fn(value, index)])) as Record<T, R>;
 
-export const objectFilter = <T extends object>(obj: T, fn: (value: T[keyof T], key: keyof T) => boolean) =>
-  Object.fromEntries(objectEntries(obj).filter(([key, value]) => fn(value, key))) as T;
-
 export const getOrSet = <M extends Map<unknown, unknown>>(
   map: M,
   key: Parameters<M['has']>[0],

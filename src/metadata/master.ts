@@ -22,12 +22,16 @@ const pool = new Tinypool({
 export type IntermediateDataMap<TIntermediateData> = Map<MaimaiRegion, Map<MaimaiMajorVersionId, TIntermediateData>>;
 export type MetadataMerger<TIntermediateData, TResult> = (intermediateDataMap: IntermediateDataMap<TIntermediateData>, thumbCache: ThumbCache) => TResult;
 
-export const runMetadata = async (inputs: Record<MaimaiRegion, Record<MaimaiMajorVersionId, string>>, outputDir: string) => {
+export const runMetadata = async (historicalMetadataInputs: Record<MaimaiRegion, Record<MaimaiMajorVersionId, string>>, outputDir: string) => {
   await fs.promises.mkdir(outputDir, { recursive: true });
 
   const thumbCacheFilePath = path.resolve(outputDir, 'thumb.json');
   let thumbCache: ThumbCache;
-  if (await fs.promises.stat(thumbCacheFilePath).catch(() => false)) {
+  const thumbCacheExists = await fs.promises.stat(thumbCacheFilePath).then(() => true).catch((err: NodeJS.ErrnoException) => {
+    if (err.code === 'ENOENT') return false;
+    throw err;
+  });
+  if (thumbCacheExists) {
     thumbCache = JSON.parse(await fs.promises.readFile(thumbCacheFilePath, 'utf-8')) as ThumbCache;
   } else {
     logger.warn('Thumb cache not found, generating metadata with empty thumb hashes');
@@ -36,7 +40,7 @@ export const runMetadata = async (inputs: Record<MaimaiRegion, Record<MaimaiMajo
 
   const index: Map<MaimaiMetadataKind, Map<MaimaiRegion, Map<MaimaiMajorVersionId, string>>> = new Map();
   const tasks: Promise<void>[] = [];
-  for (const [regionName, versionPathMap] of objectEntries(inputs)) {
+  for (const [regionName, versionPathMap] of objectEntries(historicalMetadataInputs)) {
     const region = regionName as MaimaiRegion;
     for (const [versionName, streamingAssetsPath] of objectEntries(versionPathMap)) {
       const version = Number(versionName) as MaimaiMajorVersionId;

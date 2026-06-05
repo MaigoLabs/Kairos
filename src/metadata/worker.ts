@@ -2,10 +2,10 @@ import fs from 'node:fs';
 
 import type { MaimaiMetadataKind, MaimaiRegion, MaimaiMajorVersionId, ThumbCache } from '../interfaces';
 import { createLogger } from '../logger';
+import { globAxxxDirs } from './fs';
 import { basicDataTypes } from './processors/basic';
 import { processMusic } from './processors/music';
 import { objectMap } from '../utils/base';
-import { globAxxxDirs } from '../utils/fs';
 
 const logger = createLogger('Worker');
 

@@ -1,3 +1,21 @@
-inputs:
+historicalMetadataInputs:
   JPN:
     22: D:\maimai\BUDDiES_PLUS
+
+# Path to the game package root (the dir containing Sinmai.exe and Sinmai_Data/).
+gamePackageInput: /path/to/SDEZ/Package
+
+# Where all outputs (metadata JSON, thumb cache, image pipeline working dir) live.
+outputDir: output
+
+# Salt mixed into asset hashes.
+hashSalt: change-me
+
+# Cloudflare R2 / S3-compatible upload target. Required for `image:upload`.
+upload:
+  endpoint: https://<account-hash>.r2.cloudflarestorage.com
+  bucket: my-bucket
+  prefix: mai2          # object key prefix; final key = `${prefix}/<kind>/<id>.<ext>`
+  region: auto
+  accessKeyId: REDACTED
+  secretAccessKey: REDACTED
